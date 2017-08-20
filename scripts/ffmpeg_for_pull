@@ -1,0 +1,88 @@
+#!/root/.pyenv/shims/python
+# sunchao
+# 2017 08 18
+
+import time
+import sys
+import os
+import json
+import signal
+import subprocess
+from urllib import request
+
+script, local_addr, tcurl, host, app, name, ori_name = sys.argv
+access_key = "streamingkwmanage"
+log_file = '/cache/logs/err_log/ffmpeg_for_pull.log'
+ffmpeg_path = '/usr/local/sbin/ffmpeg -re -i '
+
+def md5_sum(string):
+    import hashlib
+    md5_str = hashlib.md5()
+    md5_str.update(string.encode('utf-8'))
+    return md5_str.hexdigest()
+
+def sleep_for_ever():
+    while True:
+        time.sleep(300)
+
+def log_format(info):
+    info = str(info)
+    info_time = time.ctime()
+    ret = info_time + info
+    with open(log_file, 'a') as f:
+        f.write(ret)
+
+def kill_ffmpeg(SIG,stack):
+    os.kill(chaild.pid,signal.SIGKILL)
+    log_format("FMD kill ffmpeg_pull {0}".format(chaild.pid))
+
+def on_play(name,app,host,local_addr,access_key):
+    timestamp = int(time.time())
+    access_md5 = md5_sum(str(timestamp) + name + access_key)
+    #url = "http://stream-api.devops.fastweb.com.cn/media_dispatcher?" \
+    url = "http://183.131.159.102/media_dispatcher?" \
+        + "call=on_play_dispatch_rtmp&stream={0}&".format(name) \
+        + "application={0}&domain={1}&".format(app,host) \
+        + "node={0}&timestamp={1}&".format(local_addr,timestamp) \
+        + "md5={0}".format(access_md5)
+    response = request.urlopen(url)
+    date = response.read().decode("utf-8")
+    return date
+
+def stream_map(name, ori_name):
+    stream_bitrate = name.lstrip(ori_name)
+    transcode_info = {
+        "500":("500k", "800x450", 24),
+        "800":("800k", "960X540", 24),
+        "1200":("1200k", "1280X720", 30),
+        "2000":("2000k", "1920X1080", 30),
+        "3000":("3000k", "2560X1440", "")
+    }
+    return transcode_info.get(stream_bitrate)
+
+if ori_name == "":
+    sleep_for_ever()
+    exit()
+
+ret = on_play(ori_name,app,host,local_addr,access_key)
+upstream_respons = json.loads(ret)
+ffmpeg_input = "\"rtmp://{0}/{1}/{2} ".format(upstream_respons["node"],app,ori_name) \
+    + "tcurl={0}\" ".format(tcurl)
+
+ret = stream_map(name,ori_name)
+if ret is None:
+    ffmpeg_args = "-c copy "
+elif ret[2] == "":
+    ffmpeg_args = "-acodec libfaac -vcodec libx264 -b:v %s -s %s %s" % ret
+else:
+    ffmpeg_args = "-acodec libfaac -vcodec libx264 -b:v %s -s %s -r %d " % ret
+
+ffmpeg_output = "-f flv \"rtmp://{0}/{1}/{2} ".format(local_addr,app,name) \
+    + "tcurl={0}\"".format(tcurl)
+
+ffmpeg_path = ffmpeg_path + ffmpeg_input + ffmpeg_args + ffmpeg_output
+log_format("transcode start to run")
+chaild = subprocess.Popen(ffmpeg_path, shell=True)
+signal.signal(signal.SIGTERM,kill_ffmpeg)
+chaild.wait()
+log_format("transcode stop returncode {0}".format(chaild.returncode))
