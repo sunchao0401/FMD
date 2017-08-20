@@ -4,7 +4,6 @@
 
 import time
 import sys
-import os
 import json
 import signal
 import subprocess
@@ -14,6 +13,8 @@ script, local_addr, tcurl, host, app, name, ori_name = sys.argv
 access_key = "streamingkwmanage"
 log_file = '/cache/logs/err_log/ffmpeg_for_pull.log'
 ffmpeg_path = '/usr/local/sbin/ffmpeg -re -i '
+# CTL innerDNS 122.228.199.86 122.228.199.82 122.226.213.144 222.186.136.34
+INNERDNS = "122.228.199.82"
 
 def md5_sum(string):
     import hashlib
@@ -32,20 +33,33 @@ def log_format(info):
     with open(log_file, 'a') as f:
         f.write(ret)
 
-def kill_ffmpeg(SIG,stack):
-    os.kill(chaild.pid,signal.SIGKILL)
-    log_format("FMD kill ffmpeg_pull {0}".format(chaild.pid))
+def dns_client(domain,innerdns):
+    cmd = "dig @{0} {1} +short +time=1 | grep '^[0-9]'".format(innerdns,domain)
+    try:
+        dns_ret = subprocess.check_output(cmd, shell=True)
+    except:
+        return domain
+    dns_ret = dns_ret.decode('utf-8').split()
+    return dns_ret
 
 def on_play(name,app,host,local_addr,access_key):
     timestamp = int(time.time())
     access_md5 = md5_sum(str(timestamp) + name + access_key)
-    #url = "http://stream-api.devops.fastweb.com.cn/media_dispatcher?" \
-    url = "http://183.131.159.102/media_dispatcher?" \
+    dns_ret = dns_client('stream-api.devops.fastweb.com.cn',INNERDNS)
+    if isinstance(dns_ret,list):
+        addr = dns_ret[0]
+    else:
+        addr = dns_ret
+    url = "http://{0}/media_dispatcher?".format(addr) \
         + "call=on_play_dispatch_rtmp&stream={0}&".format(name) \
         + "application={0}&domain={1}&".format(app,host) \
         + "node={0}&timestamp={1}&".format(local_addr,timestamp) \
         + "md5={0}".format(access_md5)
-    response = request.urlopen(url)
+    try:
+        response = request.urlopen(url)
+    except:
+        log_format("dispatcher return code is not 200")
+        exit()
     date = response.read().decode("utf-8")
     return date
 
@@ -65,9 +79,17 @@ if ori_name == "":
     exit()
 
 ret = on_play(ori_name,app,host,local_addr,access_key)
-upstream_respons = json.loads(ret)
-ffmpeg_input = "\"rtmp://{0}/{1}/{2} ".format(upstream_respons["node"],app,ori_name) \
+try:
+    ret = json.loads(ret)
+except:
+    log_format("JSONDecodeError")
+    exit()
+try:
+    ffmpeg_input = "\"rtmp://{0}/{1}/{2} ".format(ret["node"],app,ori_name) \
     + "tcurl={0}\" ".format(tcurl)
+except:
+    log_format("KeyError {0}".format(ret))
+    exit()
 
 ret = stream_map(name,ori_name)
 if ret is None:
@@ -81,8 +103,14 @@ ffmpeg_output = "-f flv \"rtmp://{0}/{1}/{2} ".format(local_addr,app,name) \
     + "tcurl={0}\"".format(tcurl)
 
 ffmpeg_path = ffmpeg_path + ffmpeg_input + ffmpeg_args + ffmpeg_output
-log_format("transcode start to run")
-chaild = subprocess.Popen(ffmpeg_path, shell=True)
+log_format("start to run ffmpeg_pull")
+CHAILD = subprocess.Popen(ffmpeg_path, shell=True)
+
+def kill_ffmpeg(SIG,stack):
+    import os
+    os.kill(CHAILD.pid,signal.SIGKILL)
+    log_format("FMD kill ffmpeg_pull {0}".format(CHAILD.pid))
+
 signal.signal(signal.SIGTERM,kill_ffmpeg)
-chaild.wait()
-log_format("transcode stop returncode {0}".format(chaild.returncode))
+CHAILD.wait()
+log_format("ffmpeg_pull stoped with code {0}".format(CHAILD.returncode))
