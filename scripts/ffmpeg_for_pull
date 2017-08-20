@@ -15,6 +15,7 @@ access_key = "streamingkwmanage"
 log_file = '/cache/logs/err_log/ffmpeg_for_pull.log'
 ffmpeg_path = '/usr/local/sbin/ffmpeg -re -i '
 PID = os.getpid()
+PPID = os.getppid()
 # CTL innerDNS 122.228.199.86 122.228.199.82 122.226.213.144 222.186.136.34
 INNERDNS = "122.228.199.82"
 
@@ -27,6 +28,7 @@ def md5_sum(string):
 def sleep_for_ever():
     while True:
         time.sleep(300)
+        os.kill(PPID,0)
 
 def log_format(info,tcurl=tcurl,name=name):
     info = str(info)
