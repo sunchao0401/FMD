@@ -4,6 +4,7 @@
 
 import time
 import sys
+import os
 import json
 import signal
 import subprocess
@@ -13,6 +14,7 @@ script, local_addr, tcurl, host, app, name, ori_name = sys.argv
 access_key = "streamingkwmanage"
 log_file = '/cache/logs/err_log/ffmpeg_for_pull.log'
 ffmpeg_path = '/usr/local/sbin/ffmpeg -re -i '
+PID = os.getpid()
 # CTL innerDNS 122.228.199.86 122.228.199.82 122.226.213.144 222.186.136.34
 INNERDNS = "122.228.199.82"
 
@@ -26,10 +28,9 @@ def sleep_for_ever():
     while True:
         time.sleep(300)
 
-def log_format(info):
+def log_format(info,tcurl=tcurl,name=name):
     info = str(info)
-    info_time = time.ctime()
-    ret = info_time + info
+    ret = "{0} {1} {2} {3} {5}\n".format(time.ctime(),PID,tcurl,name,info)
     with open(log_file, 'a') as f:
         f.write(ret)
 
@@ -107,7 +108,6 @@ log_format("start to run ffmpeg_pull")
 CHAILD = subprocess.Popen(ffmpeg_path, shell=True)
 
 def kill_ffmpeg(SIG,stack):
-    import os
     os.kill(CHAILD.pid,signal.SIGKILL)
     log_format("FMD kill ffmpeg_pull {0}".format(CHAILD.pid))
 
