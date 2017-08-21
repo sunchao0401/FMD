@@ -187,7 +187,7 @@ else:
                     args[2] = str(streaming.v[2])
 
                 ffmpeg_args = "-map 0 -acodec libfaac -vcodec libx264 " \
-                    + "-b:v {0}k -r {1} ".format(args[0], args[1) \
+                    + "-b:v {0}k -r {1} ".format(args[0], args[1]) \
                     + "-vf scale=\"{0}:trunc(ow/a/2)*2\" ".format(args[2])
 
             ffmpeg_output = "-f flv \"rtmp://{0}:1835/{1}/{2} ".format(local_addr,app,args[3]) \
