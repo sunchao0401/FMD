@@ -62,7 +62,7 @@ def on_play(name,app,host,local_addr,access_key):
     try:
         response = request.urlopen(url)
     except:
-        log_format("Dispatcher stat_code is't 200")
+        log_format("Dispatcher is't 200 {0}".format(url))
         exit()
     date = response.read().decode("utf-8")
     return date
