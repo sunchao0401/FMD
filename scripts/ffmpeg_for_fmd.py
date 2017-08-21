@@ -202,8 +202,6 @@ else:
             args = pop_key(args,4)
             ffmpeg_path = ffmpeg_path + ffmpeg_args + ffmpeg_output
 
-print(ffmpeg_path)
-log_format(ffmpeg_path)
 log_format("ffmpeg start to run")
 CHAILD = subprocess.Popen(ffmpeg_path, shell=True)
 
