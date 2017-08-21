@@ -68,7 +68,7 @@ def on_play(name,app,host,local_addr,access_key):
     return date
 
 def stream_map(name, ori_name):
-    stream_bitrate = name.lstrip(ori_name)
+    stream_bitrate = name.lstrip(ori_name + "_")
     transcode_info = {
         "500":("500k", "800x450", 24),
         "800":("800k", "960X540", 24),
