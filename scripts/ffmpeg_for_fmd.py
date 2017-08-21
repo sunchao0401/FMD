@@ -163,7 +163,7 @@ else:
     streaming = Stream(local_addr,app,name,tcurl)
     has_video = streaming.video()
     ffmpeg_input = "\"rtmp://{0}/{1}/{2} ".format(local_addr,app,name) \
-        + "tcurl={0} \"".format(tcurl)
+        + "tcurl={0}\" ".format(tcurl)
 
     ffmpeg_path = ffmpeg_path + ffmpeg_input
 
@@ -191,15 +191,15 @@ else:
                     + "-vf scale=\"{0}:trunc(ow/a/2)*2\" ".format(args[2])
 
             ffmpeg_output = "-f flv \"rtmp://{0}:1835/{1}/{2} ".format(local_addr,app,args[3]) \
-                + "tcurl={0} \"".format(tcurl)
+                + "tcurl={0}\" ".format(tcurl)
             args = pop_key(args,4)
             ffmpeg_path = ffmpeg_path + ffmpeg_args + ffmpeg_output
     else:
         ffmpeg_args = "-map 0 -c copy "
         while args:
             ffmpeg_output = "-f flv \"rtmp://{0}:1835/{1}/{2} ".format(local_addr,app,args[3]) \
-                + "tcurl={0} \"".format(tcurl)
-            for i in range(0,4):
+                + "tcurl={0}\" ".format(tcurl)
+            args = pop_key(args,4)
             ffmpeg_path = ffmpeg_path + ffmpeg_args + ffmpeg_output
 
 print(ffmpeg_path)
