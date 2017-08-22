@@ -152,15 +152,18 @@ if transcode_args is None:
 
     ffmpeg_output = "-f flv \"rtmp://{0}/{1}/{2} ".format(local_addr,app,name) \
         + "tcurl={0}\"".format(tcurl)
+
     ffmpeg_path = ffmpeg_path + ffmpeg_input + ffmpeg_args + ffmpeg_output
 else:
     if len(args)%4 != 0:
         log_format("Transcode args incomplete")
         exit()
+
     streaming = Stream(local_addr,app,name,tcurl)
     has_video = streaming.video()
     ffmpeg_input = "\"rtmp://{0}/{1}/{2} ".format(local_addr,app,name) \
         + "tcurl={0}\" ".format(tcurl)
+
     ffmpeg_path = ffmpeg_path + ffmpeg_input
     if has_video:
         while args:
