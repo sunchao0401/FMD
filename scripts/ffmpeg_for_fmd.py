@@ -163,8 +163,8 @@ else:
     has_video = streaming.video()
     ffmpeg_input = "\"rtmp://{0}/{1}/{2} ".format(local_addr,app,name) \
         + "tcurl={0}\" ".format(tcurl)
-
     ffmpeg_path = ffmpeg_path + ffmpeg_input
+
     if has_video:
         while args:
             if int(args[0])*1000 >= streaming.v[0]:
