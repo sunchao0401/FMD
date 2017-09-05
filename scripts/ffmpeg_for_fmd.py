@@ -176,7 +176,7 @@ else:
                 if int(args[1]) > streaming.v[1]:
                     args[1] = str(streaming.v[1])
 
-                if args[2]:
+                if args[2] != "dummy":
                     if int(args[2].split("x")[0]) > streaming.v[2]:
                         args[2] = str(streaming.v[2])
                     else:
